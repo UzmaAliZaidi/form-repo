@@ -18,7 +18,15 @@
             <div class="form-group">
                 <label for="mobileNumber">Mobile Number:</label>
                 <input type="tel" id="mobileNumber" name="mobileNumber" required>
+                <div id ="recaptcha-container"></div>
                 <span class="error" id="mobileNumberError"></span>
+                <input type="button" id="send" value="send OTP">
+            </div>
+            <div class="form-group" style="display: none;">
+                <input type="tel" id="verificationcode" name="verificationcode" placeholder="OTP code" required>
+                <input type="button" id="verify" value="verify OTP" onclick="verifyCode()">
+                <div class="p-conf">Number Verified</div>
+                <div class="n-conf">OTP error</div>
             </div>
             <div class="form-group">
                 <label for="email">Email ID:</label>
@@ -39,5 +47,67 @@
         </form>
     </div>
     <script src="form.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCmNvwHAlDgifC1z_Yiv53FJLRvX1W_dso",
+        authDomain: "form-project-8661a.firebaseapp.com",
+        projectId: "form-project-8661a",
+        storageBucket: "form-project-8661a.appspot.com",
+        messagingSenderId: "842846247566",
+        appId: "1:842846247566:web:91078183c1291cc15fc7df",
+        measurementId: "G-BQNVYSP5F0"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Get a reference to the auth object
+    const auth = firebase.auth();
+
+    // Function to send verification code
+    function sendVerificationCode(phoneNumber) {
+        const appVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+            'size': 'invisible'
+        });
+        
+        auth.signInWithPhoneNumber(phoneNumber, appVerifier)
+            .then((confirmationResult) => {
+                window.confirmationResult = confirmationResult;
+                console.log("SMS sent");
+                document.querySelector('.form-group[style="display: none;"]').style.display = 'block';
+            }).catch((error) => {
+                console.error("Error sending SMS:", error);
+                alert("Error sending SMS. Please try again.");
+            });
+    }
+
+    // Function to verify the code
+    function verifyCode(code) {
+        window.confirmationResult.confirm(code).then((result) => {
+            const user = result.user;
+            console.log("User signed in:", user);
+            document.querySelector('.p-conf').style.display = 'block';
+            document.querySelector('.n-conf').style.display = 'none';
+        }).catch((error) => {
+            console.error("Error verifying code:", error);
+            document.querySelector('.p-conf').style.display = 'none';
+            document.querySelector('.n-conf').style.display = 'block';
+        });
+    }
+
+    // Event listeners
+    document.getElementById('send').addEventListener('click', () => {
+        const phoneNumber = document.getElementById('mobileNumber').value;
+        sendVerificationCode(phoneNumber);
+    });
+
+    document.getElementById('verify').addEventListener('click', () => {
+        const code = document.getElementById('verificationcode').value;
+        verifyCode(code);
+    });
+</script>
 </body>
 </html>
